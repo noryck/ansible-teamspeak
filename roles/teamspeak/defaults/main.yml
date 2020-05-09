@@ -1,0 +1,21 @@
+ts_user: 'teamspeak'
+ts_group: 'daemon'
+ts_home: '/home/{{ ts_user }}'
+ts_server_path: '{{ ts_home }}/server'
+ts_server_link: '{{ ts_server_path }}/latest'
+ts_service: 'ts3server'
+ts_ports:
+  - 2008/tcp
+  - 2010/udp
+  - 9987/udp
+  - 10011/tcp
+  - 30033/tcp
+  - 41144/tcp
+ts_executables:
+  - ts3server
+  - ts3server_minimal_runscript.sh
+ts_download_repo: 'https://files.teamspeak-services.com/releases/server'
+ts_version_regex: '[0-9]{0,2}\.[0-9]{1,3}\.[0-9]{1,3}'
+ts_package_name: 'teamspeak3-server_linux_amd64'
+ts_dependecies:
+  - bzip2

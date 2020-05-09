@@ -1,0 +1,8 @@
+---
+- name: configure latest version of TeamSpeak 3 server
+  hosts: teamspeak
+  remote_user: dima
+  become: yes
+  become_method: sudo
+  roles:
+    - teamspeak

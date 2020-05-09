@@ -1,0 +1,91 @@
+---
+- name: Upgrade packages
+  package:
+    name: '*'
+    state: latest
+
+- name: Install dependencies
+  package:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ ts_dependecies }}"
+
+- name: Set the hostname of the machine
+  hostname:
+    name: "{{ ansible_fqdn }}"
+
+- name: Create temporary file for donwload repo
+  tempfile:
+    state: file
+  register: download_repo
+
+- name: Get index from download repo
+  get_url:
+    url: '{{ ts_download_repo }}/index.html'
+    dest: '{{ download_repo.path }}'
+    force: yes
+  when: download_repo.path is defined
+
+- name: Determine latest available version
+  shell: 'grep -Eo "{{ ts_version_regex }}" {{ download_repo.path }} | sort -uV | tail -n1'
+  register: latest_version
+  when: download_repo.path is defined
+
+- name: Remove temporary file for donwload repo
+  file:
+    path: "{{ download_repo.path }}"
+    state: absent
+  when: download_repo.path is defined
+
+- name: Check if update is needed
+  stat:
+    path: '{{ ts_server_path }}/{{ latest_version.stdout }}'
+  register: version_to_install
+  when: latest_version.stdout is defined
+
+- name: Upgrade TeamSpeak 3 server
+  block:
+    - name: Download ts3server package
+      get_url:
+        url: '{{ ts_download_repo }}/{{ latest_version.stdout }}/{{ ts_package_name }}-{{ latest_version.stdout }}.tar.bz2'
+        dest: '/tmp/{{ ts_package_name }}-{{ latest_version.stdout }}.tar.bz2'
+      when: latest_version.stdout is defined
+
+    - name: 'Create destination for version {{ latest_version.stdout }}'
+      file:
+        path: '{{ ts_server_path }}/{{ latest_version.stdout }}'
+        state: directory
+        owner: '{{ ts_user }}'
+        group: '{{ ts_group }}'
+        mode: '0750'
+      when: latest_version.stdout is defined
+
+    - name: Unarchive ts3server package
+      unarchive:
+        src: '/tmp/{{ ts_package_name }}-{{ latest_version.stdout }}.tar.bz2'
+        dest: '{{ ts_server_path }}/{{ latest_version.stdout }}'
+        remote_src: yes
+        extra_opts: [--strip-components=1]
+      when: latest_version.stdout is defined
+
+    - name: 'Stop {{ ts_service }} service'
+      systemd:
+        name: '{{ ts_service }}'
+        state: stopped
+
+    - name: 'Set symlink {{ ts_server_link }} to verion {{ latest_version.stdout }}'
+      file:
+        src: '{{ ts_server_path }}/{{ latest_version.stdout }}'
+        dest: '{{ ts_server_link }}'
+        owner: '{{ ts_user }}'
+        group: '{{ ts_group }}'
+        state: link
+        force: yes
+      when: latest_version.stdout is defined
+
+    - name: 'Start {{ ts_service }} service'
+      systemd:
+        name: '{{ ts_service }}'
+        state: started
+
+  when: version_to_install.stat.exists is defined and version_to_install.stat.exists == false
