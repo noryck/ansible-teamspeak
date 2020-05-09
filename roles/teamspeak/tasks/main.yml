@@ -10,9 +10,26 @@
     state: present
   loop: "{{ ts_dependecies }}"
 
-- name: Set the hostname of the machine
-  hostname:
-    name: "{{ ansible_fqdn }}"
+- name: 'Create user {{ ts_user }}'
+  user:
+    name: '{{ ts_user }}'
+    group: '{{ ts_group }}'
+    state: present
+    shell: /bin/false
+    create_home: yes
+    home: '{{ ts_home }}'
+
+- name: 'Create service {{ ts_service }}'
+  template:
+    src: templates/ts3server.service.j2
+    dest: '{{ ts_service_path }}/{{ ts_service }}.service'
+    mode: '0644'
+  register: systemd
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+  when: systemd.changed
 
 - name: Create temporary file for donwload repo
   tempfile:
@@ -66,6 +83,12 @@
         dest: '{{ ts_server_path }}/{{ latest_version.stdout }}'
         remote_src: yes
         extra_opts: [--strip-components=1]
+      when: latest_version.stdout is defined
+
+    - name: Remove ts3server package download
+      file:
+        path: '/tmp/{{ ts_package_name }}-{{ latest_version.stdout }}.tar.bz2'
+        state: absent
       when: latest_version.stdout is defined
 
     - name: 'Stop {{ ts_service }} service'

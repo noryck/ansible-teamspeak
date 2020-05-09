@@ -4,6 +4,7 @@ ts_home: '/home/{{ ts_user }}'
 ts_server_path: '{{ ts_home }}/server'
 ts_server_link: '{{ ts_server_path }}/latest'
 ts_service: 'ts3server'
+ts_service_path: '/etc/systemd/system'
 ts_ports:
   - 2008/tcp
   - 2010/udp

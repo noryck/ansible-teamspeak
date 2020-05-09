@@ -1,0 +1,15 @@
+[Unit]
+Description=TeamSpeak 3 Server
+Wants=network.target
+
+[Service]
+WorkingDirectory={{ ts_home }}
+User={{ ts_user }}
+ExecStart={{ ts_home }}/ts3server_minimal_runscript.sh inifile=ts3server.ini
+ExecStop={{ ts_home }}/ts3server_startscript.sh stop
+ExecReload={{ ts_home }}/ts3server_startscript.sh restart
+Restart=always
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target
