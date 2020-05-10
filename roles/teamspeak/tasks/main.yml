@@ -19,6 +19,13 @@
     create_home: yes
     home: '{{ ts_home }}'
 
+- name: 'Configure {{ ts_service }}.ini file'
+  template:
+    src: templates/ts3server.ini.j2
+    dest: '{{ ts_home }}/{{ ts_service }}.ini'
+    mode: '0644'
+  notify: restart ts3server
+
 - name: 'Create service {{ ts_service }}'
   template:
     src: templates/ts3server.service.j2

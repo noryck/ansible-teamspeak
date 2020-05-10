@@ -5,7 +5,7 @@ Wants=network.target
 [Service]
 WorkingDirectory={{ ts_home }}
 User={{ ts_user }}
-ExecStart={{ ts_home }}/ts3server_minimal_runscript.sh inifile=ts3server.ini
+ExecStart={{ ts_home }}/ts3server_minimal_runscript.sh inifile={{ ts_service }}.ini
 ExecStop={{ ts_home }}/ts3server_startscript.sh stop
 ExecReload={{ ts_home }}/ts3server_startscript.sh restart
 Restart=always

@@ -6,3 +6,8 @@
   become_method: sudo
   roles:
     - teamspeak
+  handlers:
+  - name: 'restart {{ ts_service }}'
+    service:
+      name: '{{ ts_service | default("ts3server") }}'
+      state: restarted
