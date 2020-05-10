@@ -6,9 +6,9 @@
 
 - name: Install dependencies
   package:
-    name: "{{ item }}"
+    name: '{{ item }}'
     state: present
-  loop: "{{ ts_dependecies }}"
+  loop: '{{ ts_dependecies }}'
 
 - name: 'Create user {{ ts_user }}'
   user:
