@@ -23,8 +23,8 @@
   template:
     src: templates/ts3server.ini.j2
     dest: '{{ ts_home }}/{{ ts_service }}.ini'
-    mode: '0644'
-  notify: restart ts3server
+    mode: '0640'
+  notify: 'restart {{ ts_service }}'
 
 - name: 'Create service {{ ts_service }}'
   template:
@@ -121,6 +121,29 @@
       when: latest_version.stdout is defined
 
   when: version_to_install.stat.exists is defined and version_to_install.stat.exists == false
+
+- name: Get files in latest release
+  find:
+    paths: '{{ ts_server_link }}'
+    file_type: any
+    excludes: 'logs,ts3server_minimal_runscript.sh'
+  register: files_in_latest_release
+  tags:
+    - find
+
+- name: Check symlinks
+  file:
+    src: '{{ item.path }}'
+    dest: '{{ ts_home }}/{{ item.path | basename }}'
+    owner: '{{ ts_user }}'
+    group: '{{ ts_group }}'
+    state: link
+    force: yes
+  with_items: "{{ files_in_latest_release.files }}"
+  notify: 'restart {{ ts_service }}'
+  when: files_in_latest_release.files is defined
+  tags:
+    - find
 
 - name: 'Start {{ ts_service }} service'
   systemd:
