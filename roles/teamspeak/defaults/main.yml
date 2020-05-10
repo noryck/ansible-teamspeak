@@ -5,13 +5,17 @@ ts_server_path: '{{ ts_home }}/server'
 ts_server_link: '{{ ts_server_path }}/latest'
 ts_service: 'ts3server'
 ts_service_path: '/etc/systemd/system'
+ts_ports_enabled:
+  - default_voice_port
+  - filetransfer_port
 ts_ports:
-  - 2008/tcp
-  - 2010/udp
-  - 9987/udp
-  - 10011/tcp
-  - 30033/tcp
-  - 41144/tcp
+  default_voice_port: 9987/udp
+  filetransfer_port: 30033/tcp
+  query_port: 10011/tcp
+  query_ssh_port: 10022/tcp
+  weblist_port: 2010/udp
+  tsdns_port: 41144/tcp
+  accounting_port: 2008/tcp
 ts_executables:
   - ts3server
   - ts3server_minimal_runscript.sh

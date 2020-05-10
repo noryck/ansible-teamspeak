@@ -31,6 +31,13 @@
     daemon_reload: yes
   when: systemd.changed
 
+- name: Check enabled ports
+  firewalld:
+    port: '{{ ts_ports[item] }}'
+    permanent: true
+    state: enabled
+  loop: '{{ ts_ports_enabled }}'
+
 - name: Create temporary file for donwload repo
   tempfile:
     state: file
@@ -106,9 +113,9 @@
         force: yes
       when: latest_version.stdout is defined
 
-    - name: 'Start {{ ts_service }} service'
-      systemd:
-        name: '{{ ts_service }}'
-        state: started
-
   when: version_to_install.stat.exists is defined and version_to_install.stat.exists == false
+
+- name: 'Start {{ ts_service }} service'
+  systemd:
+    name: '{{ ts_service }}'
+    state: started
