@@ -32,7 +32,6 @@
     - server
     - backup
 
-
 - name: 'Configure {{ ts_service }}.ini file'
   template:
     src: templates/ts3server.ini.j2
