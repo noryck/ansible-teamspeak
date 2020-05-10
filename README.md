@@ -11,7 +11,7 @@
 - controlling of permissions
 - automated start of service
 
-## Databse
+## Database
 sqlite
 
 ## Supported Linux systems
