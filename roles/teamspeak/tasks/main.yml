@@ -39,18 +39,14 @@
     mode: '0640'
   notify: 'restart {{ ts_service }}'
 
-- name: 'Configure query_ip_whitelist.txt file'
+- name: 'Configure query_ip'
   template:
-    src: templates/query_ip_whitelist.txt.j2
-    dest: '{{ ts_home }}/query_ip_whitelist.txt'
-    mode: '0640'
-  notify: 'restart {{ ts_service }}'
-
-- name: 'Configure query_ip_blacklist.txt file'
-  template:
-    src: templates/query_ip_blacklist.txt.j2
-    dest: '{{ ts_home }}/query_ip_blacklist.txt'
-    mode: '0640'
+    src: 'templates/{{ item }}.txt.j2'
+    dest: '{{ ts_home }}/{{ item }}.txt'
+    mode: '0600'
+  loop:
+    - query_ip_whitelist
+    - query_ip_blacklist
   notify: 'restart {{ ts_service }}'
 
 - name: 'Create service {{ ts_service }}'
