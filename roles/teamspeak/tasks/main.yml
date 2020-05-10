@@ -19,6 +19,20 @@
     create_home: yes
     home: '{{ ts_home }}'
 
+- name: Configure directories
+  file:
+    path: '{{ ts_home }}/{{ item }}'
+    owner: '{{ ts_user }}'
+    group: '{{ ts_group }}'
+    mode: '0700'
+    state: directory
+  loop:
+    - files
+    - logs
+    - server
+    - backup
+
+
 - name: 'Configure {{ ts_service }}.ini file'
   template:
     src: templates/ts3server.ini.j2
@@ -134,7 +148,28 @@
         force: yes
       when: latest_version.stdout is defined
 
+    - name: Create DB backup
+      copy:
+        src: '{{ ts_home }}/{{ ts_sqlitedb }}'
+        dest: '{{ ts_home }}/backup/{{ ts_sqlitedb }}'
+        remote_src: yes
+
   when: version_to_install.stat.exists is defined and version_to_install.stat.exists == false
+
+- name: Check ts3server_minimal_runscript.sh
+  copy:
+    src: '{{ ts_server_link }}/ts3server_minimal_runscript.sh'
+    dest: '{{ ts_home }}/ts3server_minimal_runscript.sh'
+    owner: '{{ ts_user }}'
+    group: '{{ ts_group }}'
+    remote_src: yes
+  when: latest_version.stdout is defined
+
+- name: Check executables
+  file:
+    path: '{{ ts_home }}/{{ item }}'
+    mode: '0750'
+  loop: '{{ ts_executables }}'
 
 - name: Get files in latest release
   find:

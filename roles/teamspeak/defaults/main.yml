@@ -17,8 +17,8 @@ ts_ports:
   tsdns_port: 41144/tcp
   accounting_port: 2008/tcp
 ts_executables:
-  - ts3server
   - ts3server_minimal_runscript.sh
+ts_sqlitedb: ts3server.sqlitedb
 ts_download_repo: 'https://files.teamspeak-services.com/releases/server'
 ts_version_regex: '[0-9]{0,2}\.[0-9]{1,3}\.[0-9]{1,3}'
 ts_package_name: 'teamspeak3-server_linux_amd64'
