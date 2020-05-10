@@ -26,6 +26,20 @@
     mode: '0640'
   notify: 'restart {{ ts_service }}'
 
+- name: 'Configure query_ip_whitelist.txt file'
+  template:
+    src: templates/query_ip_whitelist.txt.j2
+    dest: '{{ ts_home }}/query_ip_whitelist.txt'
+    mode: '0640'
+  notify: 'restart {{ ts_service }}'
+
+- name: 'Configure query_ip_blacklist.txt file'
+  template:
+    src: templates/query_ip_blacklist.txt.j2
+    dest: '{{ ts_home }}/query_ip_blacklist.txt'
+    mode: '0640'
+  notify: 'restart {{ ts_service }}'
+
 - name: 'Create service {{ ts_service }}'
   template:
     src: templates/ts3server.service.j2
@@ -126,7 +140,7 @@
   find:
     paths: '{{ ts_server_link }}'
     file_type: any
-    excludes: 'logs,ts3server_minimal_runscript.sh'
+    excludes: 'ts3server_minimal_runscript.sh'
   register: files_in_latest_release
   tags:
     - find
@@ -144,6 +158,14 @@
   when: files_in_latest_release.files is defined
   tags:
     - find
+
+- name: Check permissions
+  file:
+    path: '{{ ts_home }}'
+    owner: '{{ ts_user }}'
+    group: '{{ ts_group }}'
+    state: directory
+    recurse: yes
 
 - name: 'Start {{ ts_service }} service'
   systemd:
