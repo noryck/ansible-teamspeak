@@ -2,7 +2,7 @@ ts_user: 'teamspeak'
 ts_group: 'daemon'
 ts_home: '/home/{{ ts_user }}'
 ts_server_path: '{{ ts_home }}/server'
-ts_server_link: '{{ ts_server_path }}/latest'
+ts_server_latest: '{{ ts_server_path }}/latest'
 ts_service: 'ts3server'
 ts_service_path: '/etc/systemd/system'
 ts_ports_enabled:
@@ -18,7 +18,8 @@ ts_ports:
   accounting_port: 2008/tcp
 ts_executables:
   - '{{ ts_home }}/ts3server_minimal_runscript.sh'
-  - '{{ ts_server_link }}/ts3server'
+  - '{{ ts_server_latest }}/ts3server_startscript.sh'
+  - '{{ ts_server_latest }}/ts3server'
 ts_sqlitedb: ts3server.sqlitedb
 ts_download_repo: 'https://files.teamspeak-services.com/releases/server'
 ts_version_regex: '[0-9]{0,2}\.[0-9]{1,3}\.[0-9]{1,3}'
