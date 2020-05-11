@@ -121,10 +121,10 @@
         name: '{{ ts_service }}'
         state: stopped
 
-    - name: 'Set symlink {{ ts_server_link }} to verion {{ latest_version.stdout }}'
+    - name: 'Set symlink {{ ts_server_latest }} to verion {{ latest_version.stdout }}'
       file:
         src: '{{ ts_server_path }}/{{ latest_version.stdout }}'
-        dest: '{{ ts_server_link }}'
+        dest: '{{ ts_server_latest }}'
         owner: '{{ ts_user }}'
         group: '{{ ts_group }}'
         state: link
@@ -141,7 +141,7 @@
 
 - name: Check ts3server_minimal_runscript.sh
   copy:
-    src: '{{ ts_server_link }}/ts3server_minimal_runscript.sh'
+    src: '{{ ts_server_latest }}/ts3server_minimal_runscript.sh'
     dest: '{{ ts_home }}/ts3server_minimal_runscript.sh'
     owner: '{{ ts_user }}'
     group: '{{ ts_group }}'
@@ -150,7 +150,7 @@
 
 - name: Get files in latest release
   find:
-    paths: '{{ ts_server_link }}'
+    paths: '{{ ts_server_latest }}'
     file_type: any
     excludes: 'ts3server_minimal_runscript.sh'
   register: files_in_latest_release
