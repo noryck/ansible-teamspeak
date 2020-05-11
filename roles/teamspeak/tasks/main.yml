@@ -36,7 +36,7 @@
   template:
     src: templates/ts3server.ini.j2
     dest: '{{ ts_home }}/{{ ts_service }}.ini'
-    mode: '0640'
+    mode: '0600'
   notify: 'restart {{ ts_service }}'
 
 - name: 'Configure query_ip'
@@ -99,33 +99,21 @@
 
 - name: Upgrade TeamSpeak 3 server
   block:
-    - name: Download ts3server package
-      get_url:
-        url: '{{ ts_download_repo }}/{{ latest_version.stdout }}/{{ ts_package_name }}-{{ latest_version.stdout }}.tar.bz2'
-        dest: '/tmp/{{ ts_package_name }}-{{ latest_version.stdout }}.tar.bz2'
-      when: latest_version.stdout is defined
-
     - name: 'Create destination for version {{ latest_version.stdout }}'
       file:
         path: '{{ ts_server_path }}/{{ latest_version.stdout }}'
         state: directory
         owner: '{{ ts_user }}'
         group: '{{ ts_group }}'
-        mode: '0750'
+        mode: '0700'
       when: latest_version.stdout is defined
 
-    - name: Unarchive ts3server package
+    - name: Deploy ts3server package from official repo
       unarchive:
-        src: '/tmp/{{ ts_package_name }}-{{ latest_version.stdout }}.tar.bz2'
+        src: '{{ ts_download_repo }}/{{ latest_version.stdout }}/{{ ts_package_name }}-{{ latest_version.stdout }}.tar.bz2'
         dest: '{{ ts_server_path }}/{{ latest_version.stdout }}'
         remote_src: yes
         extra_opts: [--strip-components=1]
-      when: latest_version.stdout is defined
-
-    - name: Remove ts3server package download
-      file:
-        path: '/tmp/{{ ts_package_name }}-{{ latest_version.stdout }}.tar.bz2'
-        state: absent
       when: latest_version.stdout is defined
 
     - name: 'Stop {{ ts_service }} service'
@@ -160,12 +148,6 @@
     remote_src: yes
   when: latest_version.stdout is defined
 
-- name: Check executables
-  file:
-    path: '{{ ts_home }}/{{ item }}'
-    mode: '0750'
-  loop: '{{ ts_executables }}'
-
 - name: Get files in latest release
   find:
     paths: '{{ ts_server_link }}'
@@ -188,6 +170,12 @@
   when: files_in_latest_release.files is defined
   tags:
     - find
+
+- name: Check executables
+  file:
+    path: '{{ item }}'
+    mode: '0700'
+  loop: '{{ ts_executables }}'
 
 - name: Check permissions
   file:
