@@ -3,12 +3,16 @@
   package:
     name: '*'
     state: latest
+  tags:
+    - dependencies
 
 - name: Install dependencies
   package:
     name: '{{ item }}'
     state: present
   loop: '{{ ts_dependecies }}'
+  tags:
+    - dependencies
 
 - name: 'Create user {{ ts_user }}'
   user:
@@ -18,6 +22,8 @@
     shell: /bin/false
     create_home: yes
     home: '{{ ts_home }}'
+  tags:
+    - user
 
 - name: Configure directories
   file:
@@ -31,6 +37,8 @@
     - logs
     - server
     - backup
+  tags:
+    - directories
 
 - name: 'Configure {{ ts_service }}.ini file'
   template:
@@ -38,6 +46,8 @@
     dest: '{{ ts_home }}/{{ ts_service }}.ini'
     mode: '0600'
   notify: 'restart {{ ts_service }}'
+  tags:
+    - config
 
 - name: 'Configure query_ip'
   template:
@@ -48,6 +58,8 @@
     - query_ip_whitelist
     - query_ip_blacklist
   notify: 'restart {{ ts_service }}'
+  tags:
+    - config
 
 - name: 'Create service {{ ts_service }}'
   template:
@@ -55,11 +67,15 @@
     dest: '{{ ts_service_path }}/{{ ts_service }}.service'
     mode: '0644'
   register: systemd
+  tags:
+    - systemd
 
 - name: Reload systemd
   systemd:
     daemon_reload: yes
   when: systemd.changed
+  tags:
+    - systemd
 
 - name: Check enabled ports
   firewalld:
@@ -67,6 +83,8 @@
     permanent: true
     state: enabled
   loop: '{{ ts_ports_enabled }}'
+  tags:
+    - firewall
 
 - name: Create temporary file for donwload repo
   tempfile:
@@ -173,6 +191,7 @@
   when: latest_determined.stdout is defined
   tags:
     - update
+    - runscript
 
 - name: Get files in latest release
   find:
@@ -204,6 +223,7 @@
   loop: '{{ ts_executables }}'
   tags:
     - update
+    - runscript
 
 - name: 'Check ownership on {{ ts_home }}'
   file:
@@ -214,6 +234,7 @@
     recurse: yes
   tags:
     - update
+    - permissions
 
 - name: 'Start {{ ts_service }} service'
   systemd:
@@ -221,6 +242,7 @@
     state: started
   tags:
   - update
+  - start
 
 - name: Get admin token after first installation
   block:
@@ -238,3 +260,5 @@
       when: token.stdout is defined
 
   when: db.stat.exists is defined and db.stat.exists == false
+  tags:
+    - token
