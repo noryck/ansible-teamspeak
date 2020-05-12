@@ -135,11 +135,17 @@
         force: yes
       when: latest_determined.stdout is defined
 
+    - name: 'Lookup DB {{ ts_sqlitedb }}'
+      stat:
+        path: '{{ ts_home }}/{{ ts_sqlitedb }}'
+      register: db
+
     - name: Create DB backup
       copy:
         src: '{{ ts_home }}/{{ ts_sqlitedb }}'
         dest: '{{ ts_home }}/backup/{{ ts_sqlitedb }}'
         remote_src: yes
+      when: db.stat.exists is defined and db.stat.exists == true
 
   when: (latest_stat.stat.exists is defined and latest_stat.stat.exists == false) or (latest_determined.stdout is defined and latest_installed is defined and latest_determined.stdout is version(latest_installed, ">"))
 
@@ -193,3 +199,20 @@
   systemd:
     name: '{{ ts_service }}'
     state: started
+
+- name: Get admin token after first installation
+  block:
+    - name: 'Wait until the file {{ ts_home }}/logs/ts3server_1.log is present before continuing'
+      wait_for:
+        path: '{{ ts_home }}/logs/ts3server_1.log'
+
+    - name: Search Token
+      shell: 'grep token {{ ts_home }}/logs/ts3server_1.log | cut -d"=" -f2'
+      register: token
+
+    - name: Print token
+      debug:
+        msg: 'ServerAdmin privilege key --> {{ token.stdout }}'
+      when: token.stdout is defined
+
+  when: db.stat.exists is defined and db.stat.exists == false
