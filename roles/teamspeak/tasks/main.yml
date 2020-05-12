@@ -72,6 +72,8 @@
   tempfile:
     state: file
   register: download_repo
+  tags:
+    - update
 
 - name: 'Get index.html from {{ ts_download_repo }}'
   get_url:
@@ -79,27 +81,37 @@
     dest: '{{ download_repo.path }}'
     force: yes
   when: download_repo.path is defined
+  tags:
+    - update
 
 - name: Determine latest available version
   shell: 'grep -Eo "{{ ts_version_regex }}" {{ download_repo.path }} | sort -uV | tail -n1'
   register: latest_determined
   when: download_repo.path is defined
+  tags:
+    - update
 
 - name: Remove temporary file for donwload repo
   file:
     path: "{{ download_repo.path }}"
     state: absent
   when: download_repo.path is defined
+  tags:
+    - update
 
 - name: Check installed version
   stat:
     path: '{{ ts_server_latest }}'
   register: latest_stat
+  tags:
+    - update
 
 - name: Set latest installed version 
   set_fact:
     latest_installed: '{{ latest_stat.stat.lnk_target | basename }}'
   when: latest_stat.stat.exists is defined and latest_stat.stat.exists == true
+  tags:
+    - update
 
 - name: Upgrade TeamSpeak 3 server
   block:
@@ -148,6 +160,8 @@
       when: db.stat.exists is defined and db.stat.exists == true
 
   when: (latest_stat.stat.exists is defined and latest_stat.stat.exists == false) or (latest_determined.stdout is defined and latest_installed is defined and latest_determined.stdout is version(latest_installed, ">"))
+  tags:
+    - update
 
 - name: Check ts3server_minimal_runscript.sh
   copy:
@@ -157,6 +171,8 @@
     group: '{{ ts_group }}'
     remote_src: yes
   when: latest_determined.stdout is defined
+  tags:
+    - update
 
 - name: Get files in latest release
   find:
@@ -165,7 +181,7 @@
     excludes: 'ts3server_minimal_runscript.sh'
   register: files_in_latest_release
   tags:
-    - find
+    - update
 
 - name: Check symlinks
   file:
@@ -179,13 +195,15 @@
   notify: 'restart {{ ts_service }}'
   when: files_in_latest_release.files is defined
   tags:
-    - find
+    - update
 
 - name: Check executables
   file:
     path: '{{ item }}'
     mode: '0700'
   loop: '{{ ts_executables }}'
+  tags:
+    - update
 
 - name: 'Check ownership on {{ ts_home }}'
   file:
@@ -194,11 +212,15 @@
     group: '{{ ts_group }}'
     state: directory
     recurse: yes
+  tags:
+    - update
 
 - name: 'Start {{ ts_service }} service'
   systemd:
     name: '{{ ts_service }}'
     state: started
+  tags:
+  - update
 
 - name: Get admin token after first installation
   block:
