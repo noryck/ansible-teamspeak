@@ -73,7 +73,7 @@
     state: file
   register: download_repo
 
-- name: Get index from download repo
+- name: 'Get index.html from {{ ts_download_repo }}'
   get_url:
     url: '{{ ts_download_repo }}/index.html'
     dest: '{{ download_repo.path }}'
@@ -82,7 +82,7 @@
 
 - name: Determine latest available version
   shell: 'grep -Eo "{{ ts_version_regex }}" {{ download_repo.path }} | sort -uV | tail -n1'
-  register: latest_version
+  register: latest_determined
   when: download_repo.path is defined
 
 - name: Remove temporary file for donwload repo
@@ -91,45 +91,49 @@
     state: absent
   when: download_repo.path is defined
 
-- name: Check if update is needed
+- name: Check installed version
   stat:
-    path: '{{ ts_server_path }}/{{ latest_version.stdout }}'
-  register: version_to_install
-  when: latest_version.stdout is defined
+    path: '{{ ts_server_latest }}'
+  register: latest_stat
+
+- name: Set latest installed version 
+  set_fact:
+    latest_installed: '{{ latest_stat.stat.lnk_target | basename }}'
+  when: latest_stat.stat.exists is defined and latest_stat.stat.exists == true
 
 - name: Upgrade TeamSpeak 3 server
   block:
-    - name: 'Create destination for version {{ latest_version.stdout }}'
+    - name: 'Create destination for version {{ latest_determined.stdout }}'
       file:
-        path: '{{ ts_server_path }}/{{ latest_version.stdout }}'
+        path: '{{ ts_server_path }}/{{ latest_determined.stdout }}'
         state: directory
         owner: '{{ ts_user }}'
         group: '{{ ts_group }}'
         mode: '0700'
-      when: latest_version.stdout is defined
+      when: latest_determined.stdout is defined
 
-    - name: Deploy ts3server package from official repo
+    - name: 'Deploy {{ ts_package_name }}-{{ latest_determined.stdout }}.tar.bz2 from {{ ts_download_repo }}/{{ latest_determined.stdout }} to {{ ts_server_path }}/{{ latest_determined.stdout }}'
       unarchive:
-        src: '{{ ts_download_repo }}/{{ latest_version.stdout }}/{{ ts_package_name }}-{{ latest_version.stdout }}.tar.bz2'
-        dest: '{{ ts_server_path }}/{{ latest_version.stdout }}'
+        src: '{{ ts_download_repo }}/{{ latest_determined.stdout }}/{{ ts_package_name }}-{{ latest_determined.stdout }}.tar.bz2'
+        dest: '{{ ts_server_path }}/{{ latest_determined.stdout }}'
         remote_src: yes
         extra_opts: [--strip-components=1]
-      when: latest_version.stdout is defined
+      when: latest_determined.stdout is defined
 
     - name: 'Stop {{ ts_service }} service'
       systemd:
         name: '{{ ts_service }}'
         state: stopped
 
-    - name: 'Set symlink {{ ts_server_latest }} to verion {{ latest_version.stdout }}'
+    - name: 'Set symlink {{ ts_server_latest }} to verion {{ latest_determined.stdout }}'
       file:
-        src: '{{ ts_server_path }}/{{ latest_version.stdout }}'
+        src: '{{ ts_server_path }}/{{ latest_determined.stdout }}'
         dest: '{{ ts_server_latest }}'
         owner: '{{ ts_user }}'
         group: '{{ ts_group }}'
         state: link
         force: yes
-      when: latest_version.stdout is defined
+      when: latest_determined.stdout is defined
 
     - name: Create DB backup
       copy:
@@ -137,7 +141,7 @@
         dest: '{{ ts_home }}/backup/{{ ts_sqlitedb }}'
         remote_src: yes
 
-  when: version_to_install.stat.exists is defined and version_to_install.stat.exists == false
+  when: (latest_stat.stat.exists is defined and latest_stat.stat.exists == false) or (latest_determined.stdout is defined and latest_installed is defined and latest_determined.stdout is version(latest_installed, ">"))
 
 - name: Check ts3server_minimal_runscript.sh
   copy:
@@ -146,7 +150,7 @@
     owner: '{{ ts_user }}'
     group: '{{ ts_group }}'
     remote_src: yes
-  when: latest_version.stdout is defined
+  when: latest_determined.stdout is defined
 
 - name: Get files in latest release
   find:
@@ -177,7 +181,7 @@
     mode: '0700'
   loop: '{{ ts_executables }}'
 
-- name: Check permissions
+- name: 'Check ownership on {{ ts_home }}'
   file:
     path: '{{ ts_home }}'
     owner: '{{ ts_user }}'
