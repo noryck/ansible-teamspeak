@@ -1,0 +1,4 @@
+- name: 'restart {{ ts_service }}'
+  systemd:
+    name: '{{ ts_service | default("ts3server") }}'
+    state: restarted
