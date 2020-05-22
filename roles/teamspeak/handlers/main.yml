@@ -7,5 +7,5 @@
   mail:
     to: '{{ ts_admin_email | default("root@localhost") }}'
     subject: Ansible report
-    body: 'TeamSpeak 3 Server {{ inventory_hostname }} has been updatet to {{ latest_determined.stdout }}.'
+    body: 'TeamSpeak 3 Server version {{ latest_determined.stdout }} on {{ inventory_hostname }} has been installed.'
   delegate_to: localhost
