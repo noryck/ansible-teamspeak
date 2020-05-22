@@ -2,3 +2,10 @@
   systemd:
     name: '{{ ts_service | default("ts3server") }}'
     state: restarted
+
+- name: report
+  mail:
+    to: '{{ ts_admin_email }}'
+    subject: Ansible report
+    body: 'TeamSpeak 3 Server {{ inventory_hostname }} has been updatet to {{ latest_determined.stdout }}.'
+  delegate_to: localhost

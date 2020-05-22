@@ -163,6 +163,7 @@
         group: '{{ ts_group }}'
         state: link
         force: yes
+      notify: report
       when: latest_determined.stdout is defined
 
     - name: 'Lookup DB {{ ts_sqlitedb }}'
